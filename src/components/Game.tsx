@@ -12,6 +12,7 @@ interface GameProps {
 }
 
 export function Game({ characters, languageName, onShowReference }: GameProps) {
+  const [characterFilter, setCharacterFilter] = useState<'both' | 'consonant' | 'vowel'>('both');
   const [shuffledCharacters] = useState(() => {
     const shuffled = [...characters];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -29,7 +30,12 @@ export function Game({ characters, languageName, onShowReference }: GameProps) {
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [totalChars, setTotalChars] = useState(0);
 
-  const currentCharacters = shuffledCharacters.slice(currentIndex, currentIndex + charCount);
+  // Filter characters based on selected type
+  const filteredCharacters = characterFilter === 'both'
+    ? shuffledCharacters
+    : shuffledCharacters.filter(char => char.type === characterFilter);
+
+  const currentCharacters = filteredCharacters.slice(currentIndex, currentIndex + charCount);
   const correctAnswer = currentCharacters.map(c => c.romanization).join('');
   const elapsedSeconds = (Date.now() - startTime) / 1000;
   const charsPerSecond = elapsedSeconds > 0 ? (totalChars / elapsedSeconds).toFixed(2) : '0.00';
@@ -38,6 +44,17 @@ export function Game({ characters, languageName, onShowReference }: GameProps) {
     // Reset feedback and focus input when character changes
     setFeedback(null);
   }, [currentIndex]);
+
+  useEffect(() => {
+    // Reset game when filter changes
+    setCurrentIndex(0);
+    setCharCount(1);
+    setScore(0);
+    setTotalChars(0);
+    setStartTime(Date.now());
+    setUserInput('');
+    setFeedback(null);
+  }, [characterFilter]);
 
   const checkAnswer = () => {
     const isCorrect = userInput.toLowerCase().trim() === correctAnswer.toLowerCase();
@@ -49,10 +66,10 @@ export function Game({ characters, languageName, onShowReference }: GameProps) {
 
       // Move to next character(s) immediately
       const nextIndex = currentIndex + charCount;
-      if (nextIndex < shuffledCharacters.length) {
+      if (nextIndex < filteredCharacters.length) {
         setCurrentIndex(nextIndex);
         // Randomly show 1-maxCharCount characters (but don't exceed remaining characters)
-        const remaining = shuffledCharacters.length - nextIndex;
+        const remaining = filteredCharacters.length - nextIndex;
         const maxChars = Math.min(maxCharCount, remaining);
         const newCharCount = Math.floor(Math.random() * maxChars) + 1;
         setCharCount(newCharCount);
@@ -61,7 +78,7 @@ export function Game({ characters, languageName, onShowReference }: GameProps) {
       } else {
         // Game completed
         const totalScore = score + charCount;
-        alert(`Congratulations! You completed all ${shuffledCharacters.length} characters!\nScore: ${totalScore}/${shuffledCharacters.length}\nSpeed: ${charsPerSecond} chars/sec`);
+        alert(`Congratulations! You completed all ${filteredCharacters.length} characters!\nScore: ${totalScore}/${filteredCharacters.length}\nSpeed: ${charsPerSecond} chars/sec`);
         setCurrentIndex(0);
         setCharCount(1);
         setScore(0);
@@ -83,9 +100,9 @@ export function Game({ characters, languageName, onShowReference }: GameProps) {
 
   const skip = () => {
     const nextIndex = currentIndex + charCount;
-    if (nextIndex < shuffledCharacters.length) {
+    if (nextIndex < filteredCharacters.length) {
       setCurrentIndex(nextIndex);
-      const remaining = shuffledCharacters.length - nextIndex;
+      const remaining = filteredCharacters.length - nextIndex;
       const maxChars = Math.min(maxCharCount, remaining);
       const newCharCount = Math.floor(Math.random() * maxChars) + 1;
       setCharCount(newCharCount);
@@ -109,14 +126,14 @@ export function Game({ characters, languageName, onShowReference }: GameProps) {
         <Card className="p-4">
           <div className="text-sm space-y-2">
             <div className="flex justify-between text-gray-600">
-              <span>Progress: {currentIndex + 1} / {shuffledCharacters.length}</span>
-              <span>Score: {score} / {shuffledCharacters.length}</span>
+              <span>Progress: {currentIndex + 1} / {filteredCharacters.length}</span>
+              <span>Score: {score} / {filteredCharacters.length}</span>
               <span>Speed: {charsPerSecond} char/s</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div
                 className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                style={{ width: `${((currentIndex + charCount) / shuffledCharacters.length) * 100}%` }}
+                style={{ width: `${((currentIndex + charCount) / filteredCharacters.length) * 100}%` }}
               />
             </div>
           </div>
@@ -204,6 +221,36 @@ export function Game({ characters, languageName, onShowReference }: GameProps) {
             <div className="flex justify-between text-xs text-gray-500">
               <span>Easy (1)</span>
               <span>Hard (5)</span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Character Type Filter */}
+        <Card className="p-4">
+          <div className="space-y-3">
+            <label className="text-sm font-medium">Character Type</label>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setCharacterFilter('both')}
+                variant="outline"
+                className={`flex-1 ${characterFilter === 'both' ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:text-white' : ''}`}
+              >
+                Both
+              </Button>
+              <Button
+                onClick={() => setCharacterFilter('consonant')}
+                variant="outline"
+                className={`flex-1 ${characterFilter === 'consonant' ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:text-white' : ''}`}
+              >
+                Consonants
+              </Button>
+              <Button
+                onClick={() => setCharacterFilter('vowel')}
+                variant="outline"
+                className={`flex-1 ${characterFilter === 'vowel' ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:text-white' : ''}`}
+              >
+                Vowels
+              </Button>
             </div>
           </div>
         </Card>
