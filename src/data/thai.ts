@@ -11,7 +11,7 @@ export const thaiLanguage: Language = {
     { character: "ฅ", romanization: "kh", type: "consonant" },
     { character: "ฆ", romanization: "kh", type: "consonant" },
     { character: "ง", romanization: "ng", type: "consonant" },
-    { character: "จ", romanization: "ch", type: "consonant" },
+    { character: "จ", romanization: "j", type: "consonant" },
     { character: "ฉ", romanization: "ch", type: "consonant" },
     { character: "ช", romanization: "ch", type: "consonant" },
     { character: "ซ", romanization: "s", type: "consonant" },
